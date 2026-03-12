@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import fs from "fs";
 import path from "path";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
@@ -92,10 +93,16 @@ export function getApp(): Promise<typeof app> {
   // On Vercel: serve SPA and static from public/ (no listen); prevents "download file" when GET /
   if (process.env.VERCEL) {
     const publicDir = path.join(process.cwd(), "public");
+    const indexPath = path.join(publicDir, "index.html");
     app.use(express.static(publicDir));
     app.get("*", (_req, res) => {
-      res.type("text/html");
-      res.sendFile(path.join(publicDir, "index.html"));
+      res.set("Content-Type", "text/html; charset=utf-8");
+      res.set("Content-Disposition", "inline");
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(500).send("<!DOCTYPE html><html><body><p>SPA not found. Check build output.</p></body></html>");
+      }
     });
     return;
   }
