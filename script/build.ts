@@ -38,6 +38,9 @@ async function buildAll() {
   console.log("building client...");
   await viteBuild();
 
+  console.log("embedding SPA HTML for Vercel...");
+  await import("./embed-html.ts");
+
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
   const allDeps = [
