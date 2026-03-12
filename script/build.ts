@@ -1,6 +1,7 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import { rm, readFile, mkdir, cp, writeFile } from "fs/promises";
+import path from "path";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -54,7 +55,7 @@ async function buildAll() {
     platform: "node",
     bundle: true,
     format: "cjs",
-    outfile: "dist/index.cjs",
+    outfile: "dist/server.cjs",
     define: {
       "process.env.NODE_ENV": '"production"',
     },
@@ -62,6 +63,44 @@ async function buildAll() {
     external: externals,
     logLevel: "info",
   });
+
+  if (process.env.VERCEL) {
+    console.log("writing Vercel Build Output API...");
+    const out = path.join(process.cwd(), ".vercel", "output");
+    const staticDir = path.join(out, "static");
+    const apiFuncDir = path.join(out, "functions", "api.func");
+    await rm(out, { recursive: true, force: true });
+    await mkdir(staticDir, { recursive: true });
+    await mkdir(apiFuncDir, { recursive: true });
+    await cp(path.join(process.cwd(), "dist", "public"), staticDir, { recursive: true });
+    const launcherJs = `const mod = require("./server.cjs");
+const appPromise = Promise.resolve(mod.default != null ? mod.default : mod);
+module.exports = async function handler(req, res) {
+  const app = await appPromise;
+  return app(req, res);
+};
+`;
+    await cp(path.join(process.cwd(), "dist", "server.cjs"), path.join(apiFuncDir, "server.cjs"));
+    await writeFile(path.join(apiFuncDir, "index.js"), launcherJs, "utf-8");
+    await writeFile(
+      path.join(apiFuncDir, ".vc-config.json"),
+      JSON.stringify({ runtime: "nodejs20.x", handler: "index.js", launcherType: "Nodejs" }),
+      "utf-8"
+    );
+    await writeFile(
+      path.join(out, "config.json"),
+      JSON.stringify({
+        version: 3,
+        routes: [
+          { src: "/", dest: "/index.html" },
+          { handle: "filesystem" },
+          { src: "/api/(.*)", dest: "/api/$1" },
+        ],
+      }),
+      "utf-8"
+    );
+    console.log("Build Output API written to .vercel/output");
+  }
 }
 
 buildAll().catch((err) => {

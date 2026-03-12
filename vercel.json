@@ -1,24 +1,6 @@
 {
-  "buildCommand": "npm run build && cp -r dist/public public",
+  "buildCommand": "npm run build",
   "installCommand": "npm install",
   "framework": null,
-  "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/",
-      "headers": [
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" },
-        { "key": "Content-Disposition", "value": "inline" }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" },
-        { "key": "Content-Disposition", "value": "inline" }
-      ]
-    }
-  ]
+  "outputDirectory": ".vercel/output"
 }
