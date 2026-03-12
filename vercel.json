@@ -2,9 +2,7 @@
   "buildCommand": "npm run build && cp -r dist/public public",
   "installCommand": "npm install",
   "framework": null,
-  "functions": {
-    "server.ts": {
-      "includeFiles": "public/**"
-    }
-  }
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }
