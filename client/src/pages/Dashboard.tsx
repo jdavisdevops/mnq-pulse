@@ -165,6 +165,7 @@ export default function Dashboard() {
   const [isPolling, setIsPolling] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<AudioContext | null>(null);
+  const initialFetchDoneRef = useRef(false);
 
   const { data: settings } = useQuery({
     queryKey: ["/api/settings"],
@@ -249,9 +250,18 @@ export default function Dashboard() {
     } catch { /* no audio support */ }
   }, [settings]);
 
-  // Auto-polling during alert zone
+  // Initial fetch on load when we have API key and feed is empty (e.g. GET /api/news hit another instance)
+  const hasApiKeyForEffects = !!(settings as any)?.finnhubApiKey;
   useEffect(() => {
-    if (!marketStatus?.alertZone || !(settings as any)?.finnhubApiKey) {
+    if (!hasApiKeyForEffects || newsItems.length > 0 || newsLoading) return;
+    if (initialFetchDoneRef.current) return;
+    initialFetchDoneRef.current = true;
+    fetchNewsMutation.mutate();
+  }, [hasApiKeyForEffects, newsItems.length, newsLoading]);
+
+  // Auto-polling whenever API key is set (not only during market hours)
+  useEffect(() => {
+    if (!(settings as any)?.finnhubApiKey) {
       if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
       setIsPolling(false);
       return;
@@ -268,7 +278,7 @@ export default function Dashboard() {
     return () => {
       if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
     };
-  }, [marketStatus?.alertZone, (settings as any)?.finnhubApiKey, (settings as any)?.pollingIntervalSeconds]);
+  }, [(settings as any)?.finnhubApiKey, (settings as any)?.pollingIntervalSeconds]);
 
   // Filter news
   const filteredNews = newsItems
@@ -311,7 +321,7 @@ export default function Dashboard() {
       {isPolling && (
         <div className="mb-4 p-2 rounded-lg border border-green-500/40 bg-green-500/10 flex items-center gap-2 text-xs text-green-400">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span>Live polling active — refreshing every {(settings as any)?.pollingIntervalSeconds ?? 15}s during market hours</span>
+          <span>Live polling active — refreshing every {(settings as any)?.pollingIntervalSeconds ?? 15}s</span>
         </div>
       )}
 
