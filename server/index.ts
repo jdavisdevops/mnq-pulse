@@ -23,6 +23,15 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+// On Vercel, rewrites send /api/* to /index so req.url is /index. We pass the real path
+// via __path query param so Express route matching works (e.g. POST /api/settings).
+app.use((req, _res, next) => {
+  if (process.env.VERCEL && req.query?.__path && typeof req.query.__path === "string") {
+    req.url = req.query.__path.split("?")[0];
+  }
+  next();
+});
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",

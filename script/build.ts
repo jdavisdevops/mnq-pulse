@@ -68,10 +68,10 @@ async function buildAll() {
     console.log("writing Vercel Build Output API...");
     const out = path.join(process.cwd(), ".vercel", "output");
     const staticDir = path.join(out, "static");
-    const apiFuncDir = path.join(out, "functions", "api.func");
+    const funcDir = path.join(out, "functions", "index.func");
     await rm(out, { recursive: true, force: true });
     await mkdir(staticDir, { recursive: true });
-    await mkdir(apiFuncDir, { recursive: true });
+    await mkdir(funcDir, { recursive: true });
     await cp(path.join(process.cwd(), "dist", "public"), staticDir, { recursive: true });
     const launcherJs = `const mod = require("./server.cjs");
 const appPromise = Promise.resolve(mod.default != null ? mod.default : mod);
@@ -80,13 +80,14 @@ module.exports = async function handler(req, res) {
   return app(req, res);
 };
 `;
-    await cp(path.join(process.cwd(), "dist", "server.cjs"), path.join(apiFuncDir, "server.cjs"));
-    await writeFile(path.join(apiFuncDir, "index.js"), launcherJs, "utf-8");
+    await cp(path.join(process.cwd(), "dist", "server.cjs"), path.join(funcDir, "server.cjs"));
+    await writeFile(path.join(funcDir, "index.js"), launcherJs, "utf-8");
     await writeFile(
-      path.join(apiFuncDir, ".vc-config.json"),
+      path.join(funcDir, ".vc-config.json"),
       JSON.stringify({ runtime: "nodejs20.x", handler: "index.js", launcherType: "Nodejs" }),
       "utf-8"
     );
+    // Pass real path as __path so Express can route (e.g. POST /api/settings)
     await writeFile(
       path.join(out, "config.json"),
       JSON.stringify({
@@ -94,7 +95,7 @@ module.exports = async function handler(req, res) {
         routes: [
           { src: "/", dest: "/index.html" },
           { handle: "filesystem" },
-          { src: "/api/(.*)", dest: "/api/$1" },
+          { src: "/api/(.*)", dest: "/index?__path=/api/$1" },
         ],
       }),
       "utf-8"
