@@ -44,11 +44,11 @@ If the project isn’t linked yet, the CLI will ask to link or create a Vercel p
 
 ## 3. Environment variables on Vercel
 
-In the Vercel project: **Settings → Environment Variables**, add:
+The app uses **in-memory storage** by default (news, settings, calendar). No database is required to run it.
 
-- `DATABASE_URL` – Postgres connection string (required for Drizzle and app DB).
+- **`DATABASE_URL`** – Optional. Only set this if you add Postgres and run `npm run db:push` (Drizzle migrations). Not required for the app to run on Vercel.
 
-Then redeploy so the new variables are used.
+Add any variables in the Vercel project: **Settings → Environment Variables**, then redeploy.
 
 ## 4. After first push
 

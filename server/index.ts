@@ -1,7 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
+import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
-import { createServer } from "http";
 
 const app = express();
 const httpServer = createServer(app);
@@ -60,7 +61,7 @@ app.use((req, res, next) => {
 });
 
 // Promise for Vercel entry (server.ts) to get the app after routes are registered
-let appPromiseResolve: (value: typeof app) => void;
+let appPromiseResolve!: (value: typeof app) => void;
 export const appPromise = new Promise<typeof app>((resolve) => {
   appPromiseResolve = resolve;
 });
@@ -88,8 +89,14 @@ export function getApp(): Promise<typeof app> {
 
   appPromiseResolve(app);
 
-  // On Vercel, static assets are served from public/ by CDN; no listen()
+  // On Vercel: serve SPA and static from public/ (no listen); prevents "download file" when GET /
   if (process.env.VERCEL) {
+    const publicDir = path.join(process.cwd(), "public");
+    app.use(express.static(publicDir));
+    app.get("*", (_req, res) => {
+      res.type("text/html");
+      res.sendFile(path.join(publicDir, "index.html"));
+    });
     return;
   }
 
