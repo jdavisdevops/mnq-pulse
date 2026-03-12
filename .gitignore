@@ -1,0 +1,27 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and local dev
+*.log
+npm-debug.log*
+
+# Drizzle local
+.drizzle
+
+# Vercel
+.vercel
+
+# IDE / editor
+.cursor
+
+# Windows alternate data streams (do not commit)
+*:Zone.Identifier
