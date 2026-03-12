@@ -12,7 +12,7 @@ You need a repo on GitHub and to push `main`.
 2. From the project root run (replace `YOUR_USERNAME` with your GitHub username):
 
 ```bash
-git remote add origin https://github.com/YOUR_USERNAME/mnq-pulse.git
+git remote add origin https://github.com/YOUR_USERNAME/mnq-pulse.git 
 git push -u origin main
 ```
 
