@@ -182,6 +182,16 @@ export default function Dashboard() {
   const { data: newsItems = [], isLoading: newsLoading } = useQuery<NewsItem[]>({
     queryKey: ["/api/news"],
     refetchInterval: 10000,
+    queryFn: async () => {
+      const res = await fetch("/api/news?limit=100");
+      if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length === 0) {
+        const prev = queryClient.getQueryData<NewsItem[]>(["/api/news"]);
+        if (Array.isArray(prev) && prev.length > 0) return prev;
+      }
+      return data;
+    },
   });
 
   const { data: calendarEvents = [], isLoading: calLoading } = useQuery<CalendarEvent[]>({
@@ -193,7 +203,9 @@ export default function Dashboard() {
     mutationFn: () => apiRequest("POST", "/api/news/fetch"),
     onSuccess: async (res: Response) => {
       const data = await res.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
+      if (Array.isArray(data.items)) {
+        queryClient.setQueryData(["/api/news"], data.items);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/news/unread-count"] });
       if (data.fetched > 0) {
         toast({ title: `${data.fetched} new articles`, description: "News feed updated." });

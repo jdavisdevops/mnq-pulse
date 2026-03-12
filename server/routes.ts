@@ -249,11 +249,12 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   });
 
   // ---- POST /api/news/fetch ----
-  // Manual or polling-triggered fetch
+  // Manual or polling-triggered fetch. Returns items so the client can show the feed
+  // even when GET /api/news hits a different serverless instance (in-memory not shared).
   app.post("/api/news/fetch", async (req, res) => {
     const settings = await storage.getSettings();
     if (!settings.finnhubApiKey) {
-      return res.json({ fetched: 0, message: "No API key configured. Add your Finnhub API key in Settings." });
+      return res.json({ fetched: 0, total: 0, items: [], message: "No API key configured. Add your Finnhub API key in Settings." });
     }
 
     const articles = await fetchFinnhubNews(settings.finnhubApiKey);
@@ -269,7 +270,8 @@ export async function registerRoutes(httpServer: Server, app: Express) {
     // Clean articles older than 24h
     await storage.clearOldNews(24);
 
-    res.json({ fetched: newCount, total: articles.length });
+    const items = await storage.getNewsItems(100);
+    res.json({ fetched: newCount, total: articles.length, items });
   });
 
   // ---- GET /api/calendar ----
