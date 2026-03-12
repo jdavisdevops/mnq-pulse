@@ -121,7 +121,10 @@ export class MemStorage implements IStorage {
 
   // --- Settings ---
   async getSettings(): Promise<AlertSettings> {
-    return this.settings;
+    const envKey = process.env.FINNHUB_API_KEY;
+    const effectiveKey =
+      this.settings.finnhubApiKey || (envKey ? envKey.trim() : "") || "";
+    return { ...this.settings, finnhubApiKey: effectiveKey };
   }
 
   async updateSettings(partial: Partial<InsertAlertSettings>): Promise<AlertSettings> {

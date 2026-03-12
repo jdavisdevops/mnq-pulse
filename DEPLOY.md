@@ -46,6 +46,7 @@ If the project isn’t linked yet, the CLI will ask to link or create a Vercel p
 
 The app uses **in-memory storage** by default (news, settings, calendar). No database is required to run it.
 
+- **`FINNHUB_API_KEY`** – Recommended for production. Without a database, in-memory settings do not persist across serverless invocations. Set your Finnhub API key here so the app can fetch news reliably. Get a free key at https://finnhub.io/register.
 - **`DATABASE_URL`** – Optional. Only set this if you add Postgres and run `npm run db:push` (Drizzle migrations). Not required for the app to run on Vercel.
 
 Add any variables in the Vercel project: **Settings → Environment Variables**, then redeploy.

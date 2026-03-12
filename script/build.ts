@@ -74,7 +74,7 @@ async function buildAll() {
     await mkdir(funcDir, { recursive: true });
     await cp(path.join(process.cwd(), "dist", "public"), staticDir, { recursive: true });
     const launcherJs = `const mod = require("./server.cjs");
-const appPromise = Promise.resolve(mod.default != null ? mod.default : mod);
+const appPromise = mod.getApp ? mod.getApp() : Promise.resolve(mod.default != null ? mod.default : mod);
 module.exports = async function handler(req, res) {
   const app = await appPromise;
   return app(req, res);
